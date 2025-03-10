@@ -36,3 +36,22 @@ SDL_GPUDCommandList;
 
 static SDL_GPUDevice* device;
 static SDL_GPUDCommandList* command_lists[SDL_GPUD_COMMAND_LIST_TYPE_COUNT];
+
+
+bool SDL_InitGPUD(
+    SDL_GPUDevice* device_,
+    SDL_GPUTextureFormat color_texture_format,
+    SDL_GPUTextureFormat depth_texture_format)
+{
+    if (!device_)
+    {
+        return SDL_InvalidParamError("device_");
+    }
+    device = device_;
+    return true;
+}
+
+void SDL_QuitGPUD()
+{
+    device = NULL;
+}

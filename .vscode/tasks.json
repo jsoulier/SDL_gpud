@@ -8,10 +8,35 @@
             "args": [
                 "./build.sh"
             ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
+            "problemMatcher": [],
+        },
+        {
+            "label": "CMakeLists",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                ".",
+                "--parallel",
+                "8",
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": [
+                "build.sh"
+            ],
             "problemMatcher": [],
         }
     ]

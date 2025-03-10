@@ -1,0 +1,38 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "win32_direct3d12",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/sdl_gpud.exe",
+            "args": [
+                "direct3d12"
+            ],
+            "cwd": "${workspaceFolder}/build/bin",
+            "preLaunchTask": "CMakeLists"
+        },
+        {
+            "name": "win32_metal",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/sdl_gpud.exe",
+            "args": [
+                "metal"
+            ],
+            "cwd": "${workspaceFolder}/build/bin",
+            "preLaunchTask": "CMakeLists"
+        },
+        {
+            "name": "win32_vulkan",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/sdl_gpud.exe",
+            "args": [
+                "vulkan"
+            ],
+            "cwd": "${workspaceFolder}/build/bin",
+            "preLaunchTask": "CMakeLists"
+        },
+    ]
+}

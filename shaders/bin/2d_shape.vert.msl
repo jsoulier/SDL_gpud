@@ -10,18 +10,21 @@ struct t_matrix
 
 struct main0_out
 {
+    uint o_color [[user(locn0)]];
     float4 gl_Position [[position]];
 };
 
 struct main0_in
 {
     float2 i_position [[attribute(0)]];
+    uint i_color [[attribute(1)]];
 };
 
 vertex main0_out main0(main0_in in [[stage_in]], constant t_matrix& _19 [[buffer(0)]])
 {
     main0_out out = {};
     out.gl_Position = _19.u_matrix * float4(in.i_position, 0.0, 1.0);
+    out.o_color = in.i_color;
     return out;
 }
 

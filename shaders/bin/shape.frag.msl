@@ -1,0 +1,35 @@
+#pragma clang diagnostic ignored "-Wmissing-prototypes"
+
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+struct main0_out
+{
+    float4 o_color [[color(0)]];
+};
+
+struct main0_in
+{
+    uint i_color [[user(locn0)]];
+};
+
+static inline __attribute__((always_inline))
+float4 get_color(uint color_)
+{
+    float4 color;
+    color.x = float((color_ >> uint(24)) & 255u) / 255.0;
+    color.y = float((color_ >> uint(16)) & 255u) / 255.0;
+    color.z = float((color_ >> uint(8)) & 255u) / 255.0;
+    color.w = float((color_ >> uint(0)) & 255u) / 255.0;
+    return color;
+}
+
+fragment main0_out main0(main0_in in [[stage_in]])
+{
+    main0_out out = {};
+    out.o_color = get_color(in.i_color);
+    return out;
+}
+

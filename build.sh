@@ -2,9 +2,8 @@
 
 SHADERS=(
     "2d_shape.vert"
-    "2d_shape.frag"
     "3d_shape.vert"
-    "3d_shape.frag"
+    "shape.frag"
 )
 
 SHADERCROSS=""
@@ -66,7 +65,6 @@ echo "" >> $SDL_GPUD
 cat $SDL_GPUD_BEGIN >> $SDL_GPUD
 echo "" >> $SDL_GPUD
 cat $SDL_GPUD_SHADERS >> $SDL_GPUD
-echo "" >> $SDL_GPUD
 cat $SDL_GPUD_IMPL >> $SDL_GPUD
 echo "" >> $SDL_GPUD
 echo "" >> $SDL_GPUD

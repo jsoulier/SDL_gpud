@@ -40,9 +40,8 @@ SDL_GPUDCommandList;
 typedef enum
 {
     SDL_GPUD_SHADER_TYPE_2D_SHAPE_VERT,
-    SDL_GPUD_SHADER_TYPE_2D_SHAPE_FRAG,
     SDL_GPUD_SHADER_TYPE_3D_SHAPE_VERT,
-    SDL_GPUD_SHADER_TYPE_3D_SHAPE_FRAG,
+    SDL_GPUD_SHADER_TYPE_SHAPE_FRAG,
     SDL_GPUD_SHADER_TYPE_COUNT,
 }
 SDL_GPUDShaderType;
@@ -86,6 +85,7 @@ SDL_GPUDShader;
 static SDL_GPUDevice* device;
 static SDL_GPUDCommandList* command_lists[SDL_GPUD_COMMAND_LIST_TYPE_COUNT];
 static SDL_GPUGraphicsPipeline* pipelines[SDL_GPUD_PIPELINE_TYPE_COUNT];
+static Uint32 color;
 
 bool SDL_InitGPUD(
     SDL_GPUDevice* device_,
@@ -129,50 +129,24 @@ bool SDL_InitGPUD(
             .num_storage_buffers = 0,
             .num_uniform_buffers = 1,
         },
-        [SDL_GPUD_SHADER_TYPE_2D_SHAPE_FRAG] =
-        {
-            .code =
-            {
-                [SDL_GPUD_DRIVER_TYPE_SPV] =
-                {
-                    .data = shader_2d_shape_frag_spv,
-                    .size = sizeof(shader_2d_shape_frag_spv),
-                },
-                [SDL_GPUD_DRIVER_TYPE_DXIL] =
-                {
-                    .data = shader_2d_shape_frag_dxil,
-                    .size = sizeof(shader_2d_shape_frag_dxil),
-                },
-                [SDL_GPUD_DRIVER_TYPE_MSL] =
-                {
-                    .data = shader_2d_shape_frag_msl,
-                    .size = sizeof(shader_2d_shape_frag_msl),
-                },
-            },
-            .stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
-            .num_samplers = 0,
-            .num_storage_textures = 0,
-            .num_storage_buffers = 0,
-            .num_uniform_buffers = 0,
-        },
         [SDL_GPUD_SHADER_TYPE_3D_SHAPE_VERT] =
         {
             .code =
             {
                 [SDL_GPUD_DRIVER_TYPE_SPV] =
                 {
-                    .data = shader_2d_shape_vert_spv,
-                    .size = sizeof(shader_2d_shape_vert_spv),
+                    .data = shader_3d_shape_vert_spv,
+                    .size = sizeof(shader_3d_shape_vert_spv),
                 },
                 [SDL_GPUD_DRIVER_TYPE_DXIL] =
                 {
-                    .data = shader_2d_shape_vert_dxil,
-                    .size = sizeof(shader_2d_shape_vert_dxil),
+                    .data = shader_3d_shape_vert_dxil,
+                    .size = sizeof(shader_3d_shape_vert_dxil),
                 },
                 [SDL_GPUD_DRIVER_TYPE_MSL] =
                 {
-                    .data = shader_2d_shape_vert_msl,
-                    .size = sizeof(shader_2d_shape_vert_msl),
+                    .data = shader_3d_shape_vert_msl,
+                    .size = sizeof(shader_3d_shape_vert_msl),
                 },
             },
             .stage = SDL_GPU_SHADERSTAGE_VERTEX,
@@ -181,24 +155,24 @@ bool SDL_InitGPUD(
             .num_storage_buffers = 0,
             .num_uniform_buffers = 1,
         },
-        [SDL_GPUD_SHADER_TYPE_3D_SHAPE_FRAG] =
+        [SDL_GPUD_SHADER_TYPE_SHAPE_FRAG] =
         {
             .code =
             {
                 [SDL_GPUD_DRIVER_TYPE_SPV] =
                 {
-                    .data = shader_2d_shape_frag_spv,
-                    .size = sizeof(shader_2d_shape_frag_spv),
+                    .data = shader_shape_frag_spv,
+                    .size = sizeof(shader_shape_frag_spv),
                 },
                 [SDL_GPUD_DRIVER_TYPE_DXIL] =
                 {
-                    .data = shader_2d_shape_frag_dxil,
-                    .size = sizeof(shader_2d_shape_frag_dxil),
+                    .data = shader_shape_frag_dxil,
+                    .size = sizeof(shader_shape_frag_dxil),
                 },
                 [SDL_GPUD_DRIVER_TYPE_MSL] =
                 {
-                    .data = shader_2d_shape_frag_msl,
-                    .size = sizeof(shader_2d_shape_frag_msl),
+                    .data = shader_shape_frag_msl,
+                    .size = sizeof(shader_shape_frag_msl),
                 },
             },
             .stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
@@ -255,7 +229,7 @@ bool SDL_InitGPUD(
         &(SDL_GPUGraphicsPipelineCreateInfo)
     {
         .vertex_shader = shaders[SDL_GPUD_SHADER_TYPE_2D_SHAPE_VERT].shader,
-        .fragment_shader = shaders[SDL_GPUD_SHADER_TYPE_2D_SHAPE_FRAG].shader,
+        .fragment_shader = shaders[SDL_GPUD_SHADER_TYPE_SHAPE_FRAG].shader,
         .target_info =
         {
             .num_color_targets = 1,
@@ -290,7 +264,7 @@ bool SDL_InitGPUD(
         &(SDL_GPUGraphicsPipelineCreateInfo)
     {
         .vertex_shader = shaders[SDL_GPUD_SHADER_TYPE_2D_SHAPE_VERT].shader,
-        .fragment_shader = shaders[SDL_GPUD_SHADER_TYPE_2D_SHAPE_FRAG].shader,
+        .fragment_shader = shaders[SDL_GPUD_SHADER_TYPE_SHAPE_FRAG].shader,
         .target_info =
         {
             .num_color_targets = 1,
@@ -325,7 +299,7 @@ bool SDL_InitGPUD(
         &(SDL_GPUGraphicsPipelineCreateInfo)
     {
         .vertex_shader = shaders[SDL_GPUD_SHADER_TYPE_3D_SHAPE_VERT].shader,
-        .fragment_shader = shaders[SDL_GPUD_SHADER_TYPE_3D_SHAPE_FRAG].shader,
+        .fragment_shader = shaders[SDL_GPUD_SHADER_TYPE_SHAPE_FRAG].shader,
         .target_info =
         {
             .num_color_targets = 1,
@@ -368,7 +342,7 @@ bool SDL_InitGPUD(
         &(SDL_GPUGraphicsPipelineCreateInfo)
     {
         .vertex_shader = shaders[SDL_GPUD_SHADER_TYPE_3D_SHAPE_VERT].shader,
-        .fragment_shader = shaders[SDL_GPUD_SHADER_TYPE_3D_SHAPE_FRAG].shader,
+        .fragment_shader = shaders[SDL_GPUD_SHADER_TYPE_SHAPE_FRAG].shader,
         .target_info =
         {
             .num_color_targets = 1,
@@ -433,4 +407,19 @@ void SDL_QuitGPUD()
         pipelines[type] = NULL;
     }
     device = NULL;
+}
+
+void SDL_SetGPUDColor(
+    const SDL_FColor* color_)
+{
+    if (!color_)
+    {
+        SDL_InvalidParamError("color");
+        return;
+    }
+    color = 0;
+    color |= (Uint32) SDL_max((Uint8) (color_->r * 255.0f), 255) << 24;
+    color |= (Uint32) SDL_max((Uint8) (color_->g * 255.0f), 255) << 16;
+    color |= (Uint32) SDL_max((Uint8) (color_->b * 255.0f), 255) <<  8;
+    color |= (Uint32) SDL_max((Uint8) (color_->a * 255.0f), 255) <<  0;
 }

@@ -17,5 +17,4 @@ void SDL_QuitGPUD();
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* ifdef __cplusplus */
-
 #ifdef SDL_GPUD_IMPL

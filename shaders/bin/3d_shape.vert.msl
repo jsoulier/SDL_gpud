@@ -3,7 +3,25 @@
 
 using namespace metal;
 
-vertex void main0()
+struct t_matrix
 {
+    float4x4 u_matrix;
+};
+
+struct main0_out
+{
+    float4 gl_Position [[position]];
+};
+
+struct main0_in
+{
+    float3 i_position [[attribute(0)]];
+};
+
+vertex main0_out main0(main0_in in [[stage_in]], constant t_matrix& _19 [[buffer(0)]])
+{
+    main0_out out = {};
+    out.gl_Position = _19.u_matrix * float4(in.i_position, 1.0);
+    return out;
 }
 

@@ -127,7 +127,7 @@ bool SDL_InitGPUD(
             .num_samplers = 0,
             .num_storage_textures = 0,
             .num_storage_buffers = 0,
-            .num_uniform_buffers = 0,
+            .num_uniform_buffers = 1,
         },
         [SDL_GPUD_SHADER_TYPE_2D_SHAPE_FRAG] =
         {
@@ -179,7 +179,7 @@ bool SDL_InitGPUD(
             .num_samplers = 0,
             .num_storage_textures = 0,
             .num_storage_buffers = 0,
-            .num_uniform_buffers = 0,
+            .num_uniform_buffers = 1,
         },
         [SDL_GPUD_SHADER_TYPE_3D_SHAPE_FRAG] =
         {
@@ -251,6 +251,169 @@ bool SDL_InitGPUD(
             return SDL_SetError("Failed to create shader: %s", SDL_GetError());
         }
     }
+    pipelines[SDL_GPUD_PIPELINE_TYPE_2D_LINE] = SDL_CreateGPUGraphicsPipeline(device,
+        &(SDL_GPUGraphicsPipelineCreateInfo)
+    {
+        .vertex_shader = shaders[SDL_GPUD_SHADER_TYPE_2D_SHAPE_VERT].shader,
+        .fragment_shader = shaders[SDL_GPUD_SHADER_TYPE_2D_SHAPE_FRAG].shader,
+        .target_info =
+        {
+            .num_color_targets = 1,
+            .color_target_descriptions = (SDL_GPUColorTargetDescription[])
+            {{
+                .format = color_texture_format,
+            }}
+        },
+        .vertex_input_state =
+        {
+            .num_vertex_attributes = 2,
+            .vertex_attributes = (SDL_GPUVertexAttribute[])
+            {{
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+                .location = 0,
+                .offset = 0,
+            },
+            {
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_UINT,
+                .location = 1,
+                .offset = 8,
+            }},
+            .num_vertex_buffers = 1,
+            .vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription[])
+            {{
+                .pitch = 12,
+            }},
+        },
+        .primitive_type = SDL_GPU_PRIMITIVETYPE_LINELIST,
+    });
+    pipelines[SDL_GPUD_PIPELINE_TYPE_2D_TRIANGLE] = SDL_CreateGPUGraphicsPipeline(device,
+        &(SDL_GPUGraphicsPipelineCreateInfo)
+    {
+        .vertex_shader = shaders[SDL_GPUD_SHADER_TYPE_2D_SHAPE_VERT].shader,
+        .fragment_shader = shaders[SDL_GPUD_SHADER_TYPE_2D_SHAPE_FRAG].shader,
+        .target_info =
+        {
+            .num_color_targets = 1,
+            .color_target_descriptions = (SDL_GPUColorTargetDescription[])
+            {{
+                .format = color_texture_format,
+            }}
+        },
+        .vertex_input_state =
+        {
+            .num_vertex_attributes = 2,
+            .vertex_attributes = (SDL_GPUVertexAttribute[])
+            {{
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+                .location = 0,
+                .offset = 0,
+            },
+            {
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_UINT,
+                .location = 1,
+                .offset = 8,
+            }},
+            .num_vertex_buffers = 1,
+            .vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription[])
+            {{
+                .pitch = 12,
+            }},
+        },
+        .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+    });
+    pipelines[SDL_GPUD_PIPELINE_TYPE_3D_LINE] = SDL_CreateGPUGraphicsPipeline(device,
+        &(SDL_GPUGraphicsPipelineCreateInfo)
+    {
+        .vertex_shader = shaders[SDL_GPUD_SHADER_TYPE_3D_SHAPE_VERT].shader,
+        .fragment_shader = shaders[SDL_GPUD_SHADER_TYPE_3D_SHAPE_FRAG].shader,
+        .target_info =
+        {
+            .num_color_targets = 1,
+            .color_target_descriptions = (SDL_GPUColorTargetDescription[])
+            {{
+                .format = color_texture_format,
+            }},
+            .has_depth_stencil_target = true,
+            .depth_stencil_format = depth_texture_format,
+        },
+        .vertex_input_state =
+        {
+            .num_vertex_attributes = 2,
+            .vertex_attributes = (SDL_GPUVertexAttribute[])
+            {{
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+                .location = 0,
+                .offset = 0,
+            },
+            {
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_UINT,
+                .location = 1,
+                .offset = 12,
+            }},
+            .num_vertex_buffers = 1,
+            .vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription[])
+            {{
+                .pitch = 16,
+            }},
+        },
+        .primitive_type = SDL_GPU_PRIMITIVETYPE_LINELIST,
+        .depth_stencil_state =
+        {
+            .enable_depth_test = true,
+            .enable_depth_write = true,
+            .compare_op = SDL_GPU_COMPAREOP_LESS,
+        },
+    });
+    pipelines[SDL_GPUD_PIPELINE_TYPE_3D_TRIANGLE] = SDL_CreateGPUGraphicsPipeline(device,
+        &(SDL_GPUGraphicsPipelineCreateInfo)
+    {
+        .vertex_shader = shaders[SDL_GPUD_SHADER_TYPE_3D_SHAPE_VERT].shader,
+        .fragment_shader = shaders[SDL_GPUD_SHADER_TYPE_3D_SHAPE_FRAG].shader,
+        .target_info =
+        {
+            .num_color_targets = 1,
+            .color_target_descriptions = (SDL_GPUColorTargetDescription[])
+            {{
+                .format = color_texture_format,
+            }},
+            .has_depth_stencil_target = true,
+            .depth_stencil_format = depth_texture_format,
+        },
+        .vertex_input_state =
+        {
+            .num_vertex_attributes = 2,
+            .vertex_attributes = (SDL_GPUVertexAttribute[])
+            {{
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+                .location = 0,
+                .offset = 0,
+            },
+            {
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_UINT,
+                .location = 1,
+                .offset = 12,
+            }},
+            .num_vertex_buffers = 1,
+            .vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription[])
+            {{
+                .pitch = 16,
+            }},
+        },
+        .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+        .depth_stencil_state =
+        {
+            .enable_depth_test = true,
+            .enable_depth_write = true,
+            .compare_op = SDL_GPU_COMPAREOP_LESS,
+        },
+    });
+    for (SDL_GPUDPipelineType type = 0; type < SDL_GPUD_PIPELINE_TYPE_COUNT; type++)
+    {
+        if (!pipelines[type])
+        {
+            return SDL_SetError("Failed to create pipeline: %s", SDL_GetError());
+        }
+    }
     for (SDL_GPUDShaderType type = 0; type < SDL_GPUD_SHADER_TYPE_COUNT; type++)
     {
         SDL_ReleaseGPUShader(device, shaders[type].shader);
@@ -260,5 +423,14 @@ bool SDL_InitGPUD(
 
 void SDL_QuitGPUD()
 {
+    if (!device)
+    {
+        return;
+    }
+    for (SDL_GPUDPipelineType type = 0; type < SDL_GPUD_PIPELINE_TYPE_COUNT; type++)
+    {
+        SDL_ReleaseGPUGraphicsPipeline(device, pipelines[type]);
+        pipelines[type] = NULL;
+    }
     device = NULL;
 }

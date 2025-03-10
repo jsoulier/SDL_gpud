@@ -1,69 +1,71 @@
 typedef enum
 {
-    SDL_GPUD_COMMAND_TYPE_2D_LINE,
-    SDL_GPUD_COMMAND_TYPE_2D_TRIANGLE,
-    SDL_GPUD_COMMAND_TYPE_2D_TEXT,
+    BATCH_2D_LINE,
+    BATCH_2D_TRIANGLE,
+    BATCH_2D_TEXT,
+    BATCH_3D,
+    BATCH_COUNT,
 }
-SDL_GPUDCommandType2D;
+BatchType;
 
-typedef struct SDL_GPUDCommand SDL_GPUDCommand;
-typedef struct SDL_GPUDCommand
+typedef struct Batch Batch;
+typedef struct Batch
 {
-    SDL_GPUDCommand* next;
-    SDL_GPUDCommandType2D type;
+    Batch* next;
+    BatchType type;
     SDL_GPUTransferBuffer* transfer_buffer;
     SDL_GPUBuffer* buffer;
     Uint32 size;
     Uint32 capacity;
     void* data;
 }
-SDL_GPUDCommand;
+Batch;
 
 typedef enum
 {
-    SDL_GPUD_COMMAND_LIST_TYPE_2D,
-    SDL_GPUD_COMMAND_LIST_TYPE_3D_LINE,
-    SDL_GPUD_COMMAND_LIST_TYPE_3D_TRIANGLE,
-    SDL_GPUD_COMMAND_LIST_TYPE_3D_TEXT,
-    SDL_GPUD_COMMAND_LIST_TYPE_COUNT,
+    QUEUE_2D,
+    QUEUE_3D_LINE,
+    QUEUE_3D_TRIANGLE,
+    QUEUE_3D_TEXT,
+    QUEUE_COUNT,
 }
-SDL_GPUDComandListType;
+QueueType;
 
 typedef struct
 {
-    SDL_GPUDCommand* head;
-    SDL_GPUDCommand* tail;
-    SDL_GPUDCommand* curr;
+    Batch* head;
+    Batch* tail;
+    Batch* curr;
 }
-SDL_GPUDCommandList;
+Queue;
 
 typedef enum
 {
-    SDL_GPUD_SHADER_TYPE_2D_SHAPE_VERT,
-    SDL_GPUD_SHADER_TYPE_3D_SHAPE_VERT,
-    SDL_GPUD_SHADER_TYPE_SHAPE_FRAG,
-    SDL_GPUD_SHADER_TYPE_COUNT,
+    SHADER_2D_SHAPE_VERT,
+    SHADER_3D_SHAPE_VERT,
+    SHADER_SHAPE_FRAG,
+    SHADER_COUNT,
 }
-SDL_GPUDShaderType;
+ShaderType;
 
 typedef enum
 {
-    SDL_GPUD_PIPELINE_TYPE_2D_LINE,
-    SDL_GPUD_PIPELINE_TYPE_2D_TRIANGLE,
-    SDL_GPUD_PIPELINE_TYPE_3D_LINE,
-    SDL_GPUD_PIPELINE_TYPE_3D_TRIANGLE,
-    SDL_GPUD_PIPELINE_TYPE_COUNT,
+    PIPELINE_2D_LINE,
+    PIPELINE_2D_TRIANGLE,
+    PIPELINE_3D_LINE,
+    PIPELINE_3D_TRIANGLE,
+    PIPELINE_COUNT,
 }
-SDL_GPUDPipelineType;
+PipelineType;
 
 typedef enum
 {
-    SDL_GPUD_DRIVER_TYPE_SPV,
-    SDL_GPUD_DRIVER_TYPE_DXIL,
-    SDL_GPUD_DRIVER_TYPE_MSL,
-    SDL_GPUD_DRIVER_TYPE_COUNT,
+    DRIVER_SPV,
+    DRIVER_DXIL,
+    DRIVER_MSL,
+    DRIVER_COUNT,
 }
-SDL_GPUDDriverType;
+DriverType;
 
 typedef struct
 {
@@ -73,14 +75,14 @@ typedef struct
         size_t size;
         const Uint8 *data;
     }
-    code[SDL_GPUD_DRIVER_TYPE_COUNT];
+    code[DRIVER_COUNT];
     SDL_GPUShaderStage stage;
-    Uint32 num_samplers;
-    Uint32 num_storage_textures;
-    Uint32 num_storage_buffers;
-    Uint32 num_uniform_buffers;
+    Uint32 samplers;
+    Uint32 textures;
+    Uint32 buffers;
+    Uint32 uniforms;
 }
-SDL_GPUDShader;
+Shader;
 
 typedef struct
 {
@@ -89,11 +91,11 @@ typedef struct
     float z;
     Uint32 color;
 }
-SDL_GPUDVertex;
+ShapePoint3D;
 
 static SDL_GPUDevice* device;
-static SDL_GPUDCommandList command_lists[SDL_GPUD_COMMAND_LIST_TYPE_COUNT];
-static SDL_GPUGraphicsPipeline* pipelines[SDL_GPUD_PIPELINE_TYPE_COUNT];
+static SDL_GPUGraphicsPipeline* pipelines[PIPELINE_COUNT];
+static Queue queues[QUEUE_COUNT];
 static Uint32 color;
 
 bool SDL_InitGPUD(
@@ -107,107 +109,107 @@ bool SDL_InitGPUD(
     }
     if (!device_)
     {
-        return SDL_InvalidParamError("device_");
+        return SDL_InvalidParamError("device");
     }
-    SDL_GPUDShader shaders[SDL_GPUD_SHADER_TYPE_COUNT] =
+    Shader shaders[SHADER_COUNT] =
     {
-        [SDL_GPUD_SHADER_TYPE_2D_SHAPE_VERT] =
+        [SHADER_2D_SHAPE_VERT] =
         {
             .code =
             {
-                [SDL_GPUD_DRIVER_TYPE_SPV] =
+                [DRIVER_SPV] =
                 {
                     .data = shader_2d_shape_vert_spv,
                     .size = sizeof(shader_2d_shape_vert_spv),
                 },
-                [SDL_GPUD_DRIVER_TYPE_DXIL] =
+                [DRIVER_DXIL] =
                 {
                     .data = shader_2d_shape_vert_dxil,
                     .size = sizeof(shader_2d_shape_vert_dxil),
                 },
-                [SDL_GPUD_DRIVER_TYPE_MSL] =
+                [DRIVER_MSL] =
                 {
                     .data = shader_2d_shape_vert_msl,
                     .size = sizeof(shader_2d_shape_vert_msl),
                 },
             },
             .stage = SDL_GPU_SHADERSTAGE_VERTEX,
-            .num_samplers = 0,
-            .num_storage_textures = 0,
-            .num_storage_buffers = 0,
-            .num_uniform_buffers = 1,
+            .samplers = 0,
+            .textures = 0,
+            .buffers = 0,
+            .uniforms = 1,
         },
-        [SDL_GPUD_SHADER_TYPE_3D_SHAPE_VERT] =
+        [SHADER_3D_SHAPE_VERT] =
         {
             .code =
             {
-                [SDL_GPUD_DRIVER_TYPE_SPV] =
+                [DRIVER_SPV] =
                 {
                     .data = shader_3d_shape_vert_spv,
                     .size = sizeof(shader_3d_shape_vert_spv),
                 },
-                [SDL_GPUD_DRIVER_TYPE_DXIL] =
+                [DRIVER_DXIL] =
                 {
                     .data = shader_3d_shape_vert_dxil,
                     .size = sizeof(shader_3d_shape_vert_dxil),
                 },
-                [SDL_GPUD_DRIVER_TYPE_MSL] =
+                [DRIVER_MSL] =
                 {
                     .data = shader_3d_shape_vert_msl,
                     .size = sizeof(shader_3d_shape_vert_msl),
                 },
             },
             .stage = SDL_GPU_SHADERSTAGE_VERTEX,
-            .num_samplers = 0,
-            .num_storage_textures = 0,
-            .num_storage_buffers = 0,
-            .num_uniform_buffers = 1,
+            .samplers = 0,
+            .textures = 0,
+            .buffers = 0,
+            .uniforms = 1,
         },
-        [SDL_GPUD_SHADER_TYPE_SHAPE_FRAG] =
+        [SHADER_SHAPE_FRAG] =
         {
             .code =
             {
-                [SDL_GPUD_DRIVER_TYPE_SPV] =
+                [DRIVER_SPV] =
                 {
                     .data = shader_shape_frag_spv,
                     .size = sizeof(shader_shape_frag_spv),
                 },
-                [SDL_GPUD_DRIVER_TYPE_DXIL] =
+                [DRIVER_DXIL] =
                 {
                     .data = shader_shape_frag_dxil,
                     .size = sizeof(shader_shape_frag_dxil),
                 },
-                [SDL_GPUD_DRIVER_TYPE_MSL] =
+                [DRIVER_MSL] =
                 {
                     .data = shader_shape_frag_msl,
                     .size = sizeof(shader_shape_frag_msl),
                 },
             },
             .stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
-            .num_samplers = 0,
-            .num_storage_textures = 0,
-            .num_storage_buffers = 0,
-            .num_uniform_buffers = 0,
+            .samplers = 0,
+            .textures = 0,
+            .buffers = 0,
+            .uniforms = 0,
         },
     };
-    SDL_GPUDDriverType driver_type;
+    DriverType driver_type;
     SDL_GPUShaderFormat shader_format;
     const char* entrypoint;
     if (SDL_GetGPUShaderFormats(device_) & SDL_GPU_SHADERFORMAT_SPIRV)
     {
-        driver_type = SDL_GPUD_DRIVER_TYPE_SPV;
+        driver_type = DRIVER_SPV;
         shader_format = SDL_GPU_SHADERFORMAT_SPIRV;
         entrypoint = "main";
     }
     else if (SDL_GetGPUShaderFormats(device_) & SDL_GPU_SHADERFORMAT_DXIL)
     {
-        driver_type = SDL_GPUD_DRIVER_TYPE_DXIL;
+        driver_type = DRIVER_DXIL;
         shader_format = SDL_GPU_SHADERFORMAT_DXIL;
         entrypoint = "main";
     }
     else if (SDL_GetGPUShaderFormats(device_) & SDL_GPU_SHADERFORMAT_MSL)
     {
-        driver_type = SDL_GPUD_DRIVER_TYPE_MSL;
+        driver_type = DRIVER_MSL;
         shader_format = SDL_GPU_SHADERFORMAT_MSL;
         entrypoint = "main0";
     }
@@ -215,29 +217,31 @@ bool SDL_InitGPUD(
     {
         return SDL_SetError("Unsupported shader format");
     }
-    for (SDL_GPUDShaderType type = 0; type < SDL_GPUD_SHADER_TYPE_COUNT; type++)
+    for (ShaderType type = 0; type < SHADER_COUNT; type++)
     {
-        SDL_GPUShaderCreateInfo info = {0};
-        info.code_size = shaders[type].code[driver_type].size;
-        info.code = shaders[type].code[driver_type].data;
-        info.entrypoint = entrypoint;
-        info.format = shader_format;
-        info.stage = shaders[type].stage;
-        info.num_samplers = shaders[type].num_samplers;
-        info.num_storage_textures = shaders[type].num_storage_textures;
-        info.num_storage_buffers = shaders[type].num_storage_buffers;
-        info.num_uniform_buffers = shaders[type].num_uniform_buffers;
-        shaders[type].shader = SDL_CreateGPUShader(device_, &info);
+        shaders[type].shader = SDL_CreateGPUShader(device_,
+            &(SDL_GPUShaderCreateInfo)
+        {
+            .code_size = shaders[type].code[driver_type].size,
+            .code = shaders[type].code[driver_type].data,
+            .entrypoint = entrypoint,
+            .format = shader_format,
+            .stage = shaders[type].stage,
+            .num_samplers = shaders[type].samplers,
+            .num_storage_textures = shaders[type].textures,
+            .num_storage_buffers = shaders[type].buffers,
+            .num_uniform_buffers = shaders[type].uniforms,
+        });
         if (!shaders[type].shader)
         {
             return SDL_SetError("Failed to create shader: %s", SDL_GetError());
         }
     }
-    pipelines[SDL_GPUD_PIPELINE_TYPE_2D_LINE] = SDL_CreateGPUGraphicsPipeline(device_,
+    pipelines[PIPELINE_2D_LINE] = SDL_CreateGPUGraphicsPipeline(device_,
         &(SDL_GPUGraphicsPipelineCreateInfo)
     {
-        .vertex_shader = shaders[SDL_GPUD_SHADER_TYPE_2D_SHAPE_VERT].shader,
-        .fragment_shader = shaders[SDL_GPUD_SHADER_TYPE_SHAPE_FRAG].shader,
+        .vertex_shader = shaders[SHADER_2D_SHAPE_VERT].shader,
+        .fragment_shader = shaders[SHADER_SHAPE_FRAG].shader,
         .target_info =
         {
             .num_color_targets = 1,
@@ -268,11 +272,11 @@ bool SDL_InitGPUD(
         },
         .primitive_type = SDL_GPU_PRIMITIVETYPE_LINELIST,
     });
-    pipelines[SDL_GPUD_PIPELINE_TYPE_2D_TRIANGLE] = SDL_CreateGPUGraphicsPipeline(device_,
+    pipelines[PIPELINE_2D_TRIANGLE] = SDL_CreateGPUGraphicsPipeline(device_,
         &(SDL_GPUGraphicsPipelineCreateInfo)
     {
-        .vertex_shader = shaders[SDL_GPUD_SHADER_TYPE_2D_SHAPE_VERT].shader,
-        .fragment_shader = shaders[SDL_GPUD_SHADER_TYPE_SHAPE_FRAG].shader,
+        .vertex_shader = shaders[SHADER_2D_SHAPE_VERT].shader,
+        .fragment_shader = shaders[SHADER_SHAPE_FRAG].shader,
         .target_info =
         {
             .num_color_targets = 1,
@@ -303,11 +307,11 @@ bool SDL_InitGPUD(
         },
         .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
     });
-    pipelines[SDL_GPUD_PIPELINE_TYPE_3D_LINE] = SDL_CreateGPUGraphicsPipeline(device_,
+    pipelines[PIPELINE_3D_LINE] = SDL_CreateGPUGraphicsPipeline(device_,
         &(SDL_GPUGraphicsPipelineCreateInfo)
     {
-        .vertex_shader = shaders[SDL_GPUD_SHADER_TYPE_3D_SHAPE_VERT].shader,
-        .fragment_shader = shaders[SDL_GPUD_SHADER_TYPE_SHAPE_FRAG].shader,
+        .vertex_shader = shaders[SHADER_3D_SHAPE_VERT].shader,
+        .fragment_shader = shaders[SHADER_SHAPE_FRAG].shader,
         .target_info =
         {
             .num_color_targets = 1,
@@ -346,11 +350,11 @@ bool SDL_InitGPUD(
             .compare_op = SDL_GPU_COMPAREOP_LESS,
         },
     });
-    pipelines[SDL_GPUD_PIPELINE_TYPE_3D_TRIANGLE] = SDL_CreateGPUGraphicsPipeline(device_,
+    pipelines[PIPELINE_3D_TRIANGLE] = SDL_CreateGPUGraphicsPipeline(device_,
         &(SDL_GPUGraphicsPipelineCreateInfo)
     {
-        .vertex_shader = shaders[SDL_GPUD_SHADER_TYPE_3D_SHAPE_VERT].shader,
-        .fragment_shader = shaders[SDL_GPUD_SHADER_TYPE_SHAPE_FRAG].shader,
+        .vertex_shader = shaders[SHADER_3D_SHAPE_VERT].shader,
+        .fragment_shader = shaders[SHADER_SHAPE_FRAG].shader,
         .target_info =
         {
             .num_color_targets = 1,
@@ -389,14 +393,14 @@ bool SDL_InitGPUD(
             .compare_op = SDL_GPU_COMPAREOP_LESS,
         },
     });
-    for (SDL_GPUDPipelineType type = 0; type < SDL_GPUD_PIPELINE_TYPE_COUNT; type++)
+    for (PipelineType type = 0; type < PIPELINE_COUNT; type++)
     {
         if (!pipelines[type])
         {
             return SDL_SetError("Failed to create pipeline: %s", SDL_GetError());
         }
     }
-    for (SDL_GPUDShaderType type = 0; type < SDL_GPUD_SHADER_TYPE_COUNT; type++)
+    for (ShaderType type = 0; type < SHADER_COUNT; type++)
     {
         SDL_ReleaseGPUShader(device_, shaders[type].shader);
     }
@@ -410,7 +414,7 @@ void SDL_QuitGPUD()
     {
         return;
     }
-    for (SDL_GPUDPipelineType type = 0; type < SDL_GPUD_PIPELINE_TYPE_COUNT; type++)
+    for (PipelineType type = 0; type < PIPELINE_COUNT; type++)
     {
         SDL_ReleaseGPUGraphicsPipeline(device, pipelines[type]);
         pipelines[type] = NULL;
@@ -621,6 +625,104 @@ void SDL_DrawGPUDText3D(
     }
 }
 
+static void Present2D(
+    SDL_GPUCommandBuffer* command_buffer,
+    SDL_GPUTexture* color_texture,
+    void* matrix)
+{
+    if (!matrix)
+    {
+        return;
+    }
+    SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(
+        command_buffer,
+        &(SDL_GPUColorTargetInfo)
+    {
+        .texture = color_texture,
+        .load_op = SDL_GPU_LOADOP_LOAD,
+        .store_op = SDL_GPU_STOREOP_STORE,
+    }, 1, NULL);
+    if (!render_pass)
+    {
+        SDL_Log("Failed to begin render pass: %s", SDL_GetError());
+        return;
+    }
+    SDL_EndGPURenderPass(render_pass);
+}
+
+static void Present3D(
+    SDL_GPUCommandBuffer* command_buffer,
+    SDL_GPUTexture* color_texture,
+    SDL_GPUTexture* depth_texture,
+    void* matrix)
+{
+    if (!depth_texture || !matrix)
+    {
+        return;
+    }
+    SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(
+        command_buffer,
+        &(SDL_GPUColorTargetInfo)
+    {
+        .texture = color_texture,
+        .load_op = SDL_GPU_LOADOP_LOAD,
+        .store_op = SDL_GPU_STOREOP_STORE,
+    }, 1,
+        &(SDL_GPUDepthStencilTargetInfo)
+    {
+        .texture = depth_texture,
+        .load_op = SDL_GPU_LOADOP_LOAD,
+        .store_op = SDL_GPU_STOREOP_STORE,
+        .stencil_load_op = SDL_GPU_LOADOP_LOAD,
+        .stencil_store_op = SDL_GPU_STOREOP_STORE,
+    });
+    if (!render_pass)
+    {
+        SDL_Log("Failed to begin render pass: %s", SDL_GetError());
+        return;
+    }
+    SDL_BindGPUGraphicsPipeline(render_pass, pipelines[PIPELINE_3D_LINE]);
+    SDL_PushGPUVertexUniformData(command_buffer, 0, matrix, 64);
+    for (Batch* batch = queues[QUEUE_3D_LINE].head;
+        batch != queues[QUEUE_3D_LINE].curr->next; batch = batch->next)
+    {
+        SDL_BindGPUVertexBuffers(
+            render_pass, 0,
+            &(SDL_GPUBufferBinding)
+        {
+            .buffer = batch->buffer
+        }, 1);
+        SDL_DrawGPUPrimitives(
+            render_pass,
+            batch->size / sizeof(ShapePoint3D),
+            1, 0, 0);
+    }
+    SDL_BindGPUGraphicsPipeline(render_pass, pipelines[PIPELINE_3D_TRIANGLE]);
+    SDL_PushGPUVertexUniformData(command_buffer, 0, matrix, 64);
+    for (Batch* batch = queues[QUEUE_3D_TRIANGLE].head;
+        batch != queues[QUEUE_3D_TRIANGLE].curr->next; batch = batch->next)
+    {
+        SDL_BindGPUVertexBuffers(
+            render_pass, 0,
+            &(SDL_GPUBufferBinding)
+        {
+            .buffer = batch->buffer
+        }, 1);
+        SDL_DrawGPUPrimitives(
+            render_pass,
+            batch->size / sizeof(ShapePoint3D),
+            1, 0, 0);
+    }
+    /* TODO: */
+    // SDL_BindGPUGraphicsPipeline(render_pass, pipelines[PIPELINE_3D_TEXT]);
+    // SDL_PushGPUVertexUniformData(command_buffer, 0, matrix, 64);
+    // for (Batch* batch = queues[QUEUE_3D_TEXT].head;
+    //     batch != queues[QUEUE_3D_TEXT].curr->next; batch = batch->next)
+    // {
+    // }
+    SDL_EndGPURenderPass(render_pass);
+}
+
 void SDL_PresentGPUD(
     SDL_GPUCommandBuffer* command_buffer,
     SDL_GPUTexture* color_texture,
@@ -649,29 +751,28 @@ void SDL_PresentGPUD(
     }
     if (depth_texture && !matrix_3d)
     {
-        SDL_SetError("Provided depth texture but no 3D matrix");
-        return;
+        SDL_Log("Provided depth texture but no 3D matrix");
     }
     if (!depth_texture && matrix_3d)
     {
-        SDL_SetError("Provided 3D matrix but no depth texture");
-        return;
+        SDL_Log("Provided 3D matrix but no depth texture");
     }
-    if (!matrix_2d && command_lists[SDL_GPUD_COMMAND_LIST_TYPE_2D].curr !=
-        command_lists[SDL_GPUD_COMMAND_LIST_TYPE_2D].head)
+    if (!matrix_2d && (
+        queues[QUEUE_2D].curr !=
+        queues[QUEUE_2D].head))
     {
-        SDL_SetError("Invoked 2D draw calls but not provided 2D matrix");
-        return;
+        SDL_Log("Invoked 2D draw calls but not provided 2D matrix");
     }
     if (!matrix_3d && (
-        command_lists[SDL_GPUD_COMMAND_LIST_TYPE_3D_LINE].curr !=
-        command_lists[SDL_GPUD_COMMAND_LIST_TYPE_3D_LINE].head ||
-        command_lists[SDL_GPUD_COMMAND_LIST_TYPE_3D_TRIANGLE].curr !=
-        command_lists[SDL_GPUD_COMMAND_LIST_TYPE_3D_TRIANGLE].head ||
-        command_lists[SDL_GPUD_COMMAND_LIST_TYPE_3D_TEXT].curr !=
-        command_lists[SDL_GPUD_COMMAND_LIST_TYPE_3D_TEXT].head))
+        queues[QUEUE_3D_LINE].curr !=
+        queues[QUEUE_3D_LINE].head &&
+        queues[QUEUE_3D_TRIANGLE].curr !=
+        queues[QUEUE_3D_TRIANGLE].head &&
+        queues[QUEUE_3D_TEXT].curr !=
+        queues[QUEUE_3D_TEXT].head))
     {
-        SDL_SetError("Invoked 3D draw calls but not provided 3D matrix");
-        return;
+        SDL_Log("Invoked 3D draw calls but not provided 3D matrix");
     }
+    Present2D(command_buffer, color_texture, matrix_2d);
+    Present3D(command_buffer, color_texture, depth_texture, matrix_3d);
 }

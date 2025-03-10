@@ -336,8 +336,7 @@ void SDL_SetGPUDColor(
     SDL_SetGPUDColor(&color);
 }
 
-/* TODO: finish the wrappers */
-/* TODO: finish the wrappers */
+/* TODO: */
 
 #endif /* ifdef __cplusplus */
 #ifdef SDL_GPUD_IMPL

@@ -152,13 +152,178 @@ extern "C"
 {
 #endif /* ifdef __cplusplus */
 
+/**
+ * @brief 
+ * 
+ */
+typedef struct
+{
+    float x;
+    float y;
+    float z;
+}
+SDL_GPUDPoint;
+
+/**
+ * @brief 
+ * 
+ * @param device 
+ * @param color_texture_format 
+ * @param depth_texture_format 
+ * @return
+ */
 bool SDL_InitGPUD(
     SDL_GPUDevice* device,
     SDL_GPUTextureFormat color_texture_format,
     SDL_GPUTextureFormat depth_texture_format);
+
+/**
+ * @brief 
+ * 
+ */
 void SDL_QuitGPUD();
+
+/**
+ * @brief 
+ * 
+ * @param color 
+ */
 void SDL_SetGPUDColor(
     const SDL_FColor* color);
+
+/**
+ * @brief 
+ * 
+ * @param x1 
+ * @param y1 
+ * @param x2 
+ * @param y2 
+ */
+void SDL_DrawGPUDLine2D(
+    float x1,
+    float y1,
+    float x2,
+    float y2);
+
+/**
+ * @brief 
+ * 
+ * @param x 
+ * @param y 
+ * @param radius 
+ */
+void SDL_DrawGPUDPoint2D(
+    float x,
+    float y,
+    float radius);
+
+/**
+ * @brief 
+ * 
+ * @param x1 
+ * @param y1 
+ * @param x2 
+ * @param y2 
+ */
+void SDL_DrawGPUDBox2D(
+    float x1,
+    float y1,
+    float x2,
+    float y2);
+
+/**
+ * @brief 
+ * 
+ * @param x 
+ * @param y 
+ * @param radius 
+ */
+void SDL_DrawGPUDCircle2D(
+    float x,
+    float y,
+    float radius);
+
+/**
+ * @brief 
+ * 
+ * @param text 
+ * @param x 
+ * @param y 
+ * @param size 
+ */
+void SDL_DrawGPUDText2D(
+    const char* text,
+    float x,
+    float y,
+    float size);
+
+/**
+ * @brief 
+ * 
+ * @param start 
+ * @param end 
+ */
+void SDL_DrawGPUDLine3D(
+    const SDL_GPUDPoint* start,
+    const SDL_GPUDPoint* end);
+
+/**
+ * @brief 
+ * 
+ * @param center 
+ * @param radius 
+ */
+void SDL_DrawGPUDPoint3D(
+    const SDL_GPUDPoint* center,
+    float radius);
+
+/**
+ * @brief 
+ * 
+ * @param start 
+ * @param end 
+ */
+void SDL_DrawGPUDBox3D(
+    const SDL_GPUDPoint* start,
+    const SDL_GPUDPoint* end);
+
+/**
+ * @brief 
+ * 
+ * @param center 
+ * @param radius 
+ */
+void SDL_DrawGPUDSphere3D(
+    const SDL_GPUDPoint* center,
+    float radius);
+
+/**
+ * @brief 
+ * 
+ * @param text 
+ * @param center 
+ * @param size 
+ */
+void SDL_DrawGPUDText3D(
+    const char* text,
+    const SDL_GPUDPoint* center,
+    float size);
+
+/**
+ * @brief 
+ * 
+ * @param command_buffer 
+ * @param color_texture 
+ * @param depth_texture 
+ * @param matrix_2d 
+ * @param matrix_3d 
+ */
+void SDL_PresentGPUD(
+    SDL_GPUCommandBuffer* command_buffer,
+    SDL_GPUTexture* color_texture,
+    SDL_GPUTexture* depth_texture,
+    void* matrix_2d,
+    void* matrix_3d);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -170,6 +335,9 @@ void SDL_SetGPUDColor(
 {
     SDL_SetGPUDColor(&color);
 }
+
+/* TODO: finish the wrappers */
+/* TODO: finish the wrappers */
 
 #endif /* ifdef __cplusplus */
 #ifdef SDL_GPUD_IMPL

@@ -82,8 +82,17 @@ typedef struct
 }
 SDL_GPUDShader;
 
+typedef struct
+{
+    float x;
+    float y;
+    float z;
+    Uint32 color;
+}
+SDL_GPUDVertex;
+
 static SDL_GPUDevice* device;
-static SDL_GPUDCommandList* command_lists[SDL_GPUD_COMMAND_LIST_TYPE_COUNT];
+static SDL_GPUDCommandList command_lists[SDL_GPUD_COMMAND_LIST_TYPE_COUNT];
 static SDL_GPUGraphicsPipeline* pipelines[SDL_GPUD_PIPELINE_TYPE_COUNT];
 static Uint32 color;
 
@@ -100,7 +109,6 @@ bool SDL_InitGPUD(
     {
         return SDL_InvalidParamError("device_");
     }
-    device = device_;
     SDL_GPUDShader shaders[SDL_GPUD_SHADER_TYPE_COUNT] =
     {
         [SDL_GPUD_SHADER_TYPE_2D_SHAPE_VERT] =
@@ -185,19 +193,19 @@ bool SDL_InitGPUD(
     SDL_GPUDDriverType driver_type;
     SDL_GPUShaderFormat shader_format;
     const char* entrypoint;
-    if (SDL_GetGPUShaderFormats(device) & SDL_GPU_SHADERFORMAT_SPIRV)
+    if (SDL_GetGPUShaderFormats(device_) & SDL_GPU_SHADERFORMAT_SPIRV)
     {
         driver_type = SDL_GPUD_DRIVER_TYPE_SPV;
         shader_format = SDL_GPU_SHADERFORMAT_SPIRV;
         entrypoint = "main";
     }
-    else if (SDL_GetGPUShaderFormats(device) & SDL_GPU_SHADERFORMAT_DXIL)
+    else if (SDL_GetGPUShaderFormats(device_) & SDL_GPU_SHADERFORMAT_DXIL)
     {
         driver_type = SDL_GPUD_DRIVER_TYPE_DXIL;
         shader_format = SDL_GPU_SHADERFORMAT_DXIL;
         entrypoint = "main";
     }
-    else if (SDL_GetGPUShaderFormats(device) & SDL_GPU_SHADERFORMAT_MSL)
+    else if (SDL_GetGPUShaderFormats(device_) & SDL_GPU_SHADERFORMAT_MSL)
     {
         driver_type = SDL_GPUD_DRIVER_TYPE_MSL;
         shader_format = SDL_GPU_SHADERFORMAT_MSL;
@@ -219,13 +227,13 @@ bool SDL_InitGPUD(
         info.num_storage_textures = shaders[type].num_storage_textures;
         info.num_storage_buffers = shaders[type].num_storage_buffers;
         info.num_uniform_buffers = shaders[type].num_uniform_buffers;
-        shaders[type].shader = SDL_CreateGPUShader(device, &info);
+        shaders[type].shader = SDL_CreateGPUShader(device_, &info);
         if (!shaders[type].shader)
         {
             return SDL_SetError("Failed to create shader: %s", SDL_GetError());
         }
     }
-    pipelines[SDL_GPUD_PIPELINE_TYPE_2D_LINE] = SDL_CreateGPUGraphicsPipeline(device,
+    pipelines[SDL_GPUD_PIPELINE_TYPE_2D_LINE] = SDL_CreateGPUGraphicsPipeline(device_,
         &(SDL_GPUGraphicsPipelineCreateInfo)
     {
         .vertex_shader = shaders[SDL_GPUD_SHADER_TYPE_2D_SHAPE_VERT].shader,
@@ -260,7 +268,7 @@ bool SDL_InitGPUD(
         },
         .primitive_type = SDL_GPU_PRIMITIVETYPE_LINELIST,
     });
-    pipelines[SDL_GPUD_PIPELINE_TYPE_2D_TRIANGLE] = SDL_CreateGPUGraphicsPipeline(device,
+    pipelines[SDL_GPUD_PIPELINE_TYPE_2D_TRIANGLE] = SDL_CreateGPUGraphicsPipeline(device_,
         &(SDL_GPUGraphicsPipelineCreateInfo)
     {
         .vertex_shader = shaders[SDL_GPUD_SHADER_TYPE_2D_SHAPE_VERT].shader,
@@ -295,7 +303,7 @@ bool SDL_InitGPUD(
         },
         .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
     });
-    pipelines[SDL_GPUD_PIPELINE_TYPE_3D_LINE] = SDL_CreateGPUGraphicsPipeline(device,
+    pipelines[SDL_GPUD_PIPELINE_TYPE_3D_LINE] = SDL_CreateGPUGraphicsPipeline(device_,
         &(SDL_GPUGraphicsPipelineCreateInfo)
     {
         .vertex_shader = shaders[SDL_GPUD_SHADER_TYPE_3D_SHAPE_VERT].shader,
@@ -338,7 +346,7 @@ bool SDL_InitGPUD(
             .compare_op = SDL_GPU_COMPAREOP_LESS,
         },
     });
-    pipelines[SDL_GPUD_PIPELINE_TYPE_3D_TRIANGLE] = SDL_CreateGPUGraphicsPipeline(device,
+    pipelines[SDL_GPUD_PIPELINE_TYPE_3D_TRIANGLE] = SDL_CreateGPUGraphicsPipeline(device_,
         &(SDL_GPUGraphicsPipelineCreateInfo)
     {
         .vertex_shader = shaders[SDL_GPUD_SHADER_TYPE_3D_SHAPE_VERT].shader,
@@ -390,8 +398,9 @@ bool SDL_InitGPUD(
     }
     for (SDL_GPUDShaderType type = 0; type < SDL_GPUD_SHADER_TYPE_COUNT; type++)
     {
-        SDL_ReleaseGPUShader(device, shaders[type].shader);
+        SDL_ReleaseGPUShader(device_, shaders[type].shader);
     }
+    device = device_;
     return true;
 }
 
@@ -412,6 +421,10 @@ void SDL_QuitGPUD()
 void SDL_SetGPUDColor(
     const SDL_FColor* color_)
 {
+    if (!device)
+    {
+        return;
+    }
     if (!color_)
     {
         SDL_InvalidParamError("color");
@@ -422,4 +435,243 @@ void SDL_SetGPUDColor(
     color |= (Uint32) SDL_max((Uint8) (color_->g * 255.0f), 255) << 16;
     color |= (Uint32) SDL_max((Uint8) (color_->b * 255.0f), 255) <<  8;
     color |= (Uint32) SDL_max((Uint8) (color_->a * 255.0f), 255) <<  0;
+}
+
+void SDL_DrawGPUDLine2D(
+    float x1,
+    float y1,
+    float x2,
+    float y2)
+{
+    if (!device)
+    {
+        return;
+    }
+}
+
+void SDL_DrawGPUDPoint2D(
+    float x,
+    float y,
+    float radius)
+{
+    if (!device)
+    {
+        return;
+    }
+    if (radius < SDL_FLT_EPSILON)
+    {
+        SDL_InvalidParamError("radius");
+        return;
+    }
+}
+
+void SDL_DrawGPUDBox2D(
+    float x1,
+    float y1,
+    float x2,
+    float y2)
+{
+    if (!device)
+    {
+        return;
+    }
+}
+
+void SDL_DrawGPUDCircle2D(
+    float x,
+    float y,
+    float radius)
+{
+    if (!device)
+    {
+        return;
+    }
+    if (radius < SDL_FLT_EPSILON)
+    {
+        SDL_InvalidParamError("radius");
+        return;
+    }
+}
+
+void SDL_DrawGPUDText2D(
+    const char* text,
+    float x,
+    float y,
+    float size)
+{
+    if (!device)
+    {
+        return;
+    }
+    if (!text)
+    {
+        SDL_InvalidParamError("text");
+        return;
+    }
+    if (size < SDL_FLT_EPSILON)
+    {
+        SDL_InvalidParamError("size");
+        return;
+    }
+}
+
+void SDL_DrawGPUDLine3D(
+    const SDL_GPUDPoint* start,
+    const SDL_GPUDPoint* end)
+{
+    if (!device)
+    {
+        return;
+    }
+    if (!start)
+    {
+        SDL_InvalidParamError("start");
+        return;
+    }
+    if (!end)
+    {
+        SDL_InvalidParamError("end");
+        return;
+    }
+}
+
+void SDL_DrawGPUDPoint3D(
+    const SDL_GPUDPoint* center,
+    float radius)
+{
+    if (!device)
+    {
+        return;
+    }
+    if (!center)
+    {
+        SDL_InvalidParamError("center");
+        return;
+    }
+    if (radius < SDL_FLT_EPSILON)
+    {
+        SDL_InvalidParamError("radius");
+        return;
+    }
+}
+
+void SDL_DrawGPUDBox3D(
+    const SDL_GPUDPoint* start,
+    const SDL_GPUDPoint* end)
+{
+    if (!device)
+    {
+        return;
+    }
+    if (!start)
+    {
+        SDL_InvalidParamError("start");
+        return;
+    }
+    if (!end)
+    {
+        SDL_InvalidParamError("end");
+        return;
+    }
+}
+
+void SDL_DrawGPUDSphere3D(
+    const SDL_GPUDPoint* center,
+    float radius)
+{
+    if (!device)
+    {
+        return;
+    }
+    if (!center)
+    {
+        SDL_InvalidParamError("center");
+        return;
+    }
+    if (radius < SDL_FLT_EPSILON)
+    {
+        SDL_InvalidParamError("radius");
+        return;
+    }
+}
+
+void SDL_DrawGPUDText3D(
+    const char* text,
+    const SDL_GPUDPoint* center,
+    float size)
+{
+    if (!device)
+    {
+        return;
+    }
+    if (!text)
+    {
+        SDL_InvalidParamError("text");
+        return;
+    }
+    if (!center)
+    {
+        SDL_InvalidParamError("center");
+        return;
+    }
+    if (size < SDL_FLT_EPSILON)
+    {
+        SDL_InvalidParamError("size");
+        return;
+    }
+}
+
+void SDL_PresentGPUD(
+    SDL_GPUCommandBuffer* command_buffer,
+    SDL_GPUTexture* color_texture,
+    SDL_GPUTexture* depth_texture,
+    void* matrix_2d,
+    void* matrix_3d)
+{
+    if (!device)
+    {
+        return;
+    }
+    if (!command_buffer)
+    {
+        SDL_InvalidParamError("command_buffer");
+        return;
+    }
+    if (!color_texture)
+    {
+        SDL_InvalidParamError("color_texture");
+        return;
+    }
+    if (!depth_texture)
+    {
+        SDL_InvalidParamError("depth_texture");
+        return;
+    }
+    if (depth_texture && !matrix_3d)
+    {
+        SDL_SetError("Provided depth texture but no 3D matrix");
+        return;
+    }
+    if (!depth_texture && matrix_3d)
+    {
+        SDL_SetError("Provided 3D matrix but no depth texture");
+        return;
+    }
+    if (!matrix_2d && command_lists[SDL_GPUD_COMMAND_LIST_TYPE_2D].curr !=
+        command_lists[SDL_GPUD_COMMAND_LIST_TYPE_2D].head)
+    {
+        SDL_SetError("Invoked 2D draw calls but not provided 2D matrix");
+        return;
+    }
+    if (!matrix_3d && (
+        command_lists[SDL_GPUD_COMMAND_LIST_TYPE_3D_LINE].curr !=
+        command_lists[SDL_GPUD_COMMAND_LIST_TYPE_3D_LINE].head ||
+        command_lists[SDL_GPUD_COMMAND_LIST_TYPE_3D_TRIANGLE].curr !=
+        command_lists[SDL_GPUD_COMMAND_LIST_TYPE_3D_TRIANGLE].head ||
+        command_lists[SDL_GPUD_COMMAND_LIST_TYPE_3D_TEXT].curr !=
+        command_lists[SDL_GPUD_COMMAND_LIST_TYPE_3D_TEXT].head))
+    {
+        SDL_SetError("Invoked 3D draw calls but not provided 3D matrix");
+        return;
+    }
 }

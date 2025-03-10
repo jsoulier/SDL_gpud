@@ -10,7 +10,7 @@
                 "direct3d12"
             ],
             "cwd": "${workspaceFolder}/build/bin",
-            "preLaunchTask": "CMakeLists"
+            "preLaunchTask": "all"
         },
         {
             "name": "win32_metal",
@@ -21,7 +21,7 @@
                 "metal"
             ],
             "cwd": "${workspaceFolder}/build/bin",
-            "preLaunchTask": "CMakeLists"
+            "preLaunchTask": "all"
         },
         {
             "name": "win32_vulkan",
@@ -32,7 +32,7 @@
                 "vulkan"
             ],
             "cwd": "${workspaceFolder}/build/bin",
-            "preLaunchTask": "CMakeLists"
+            "preLaunchTask": "all"
         },
     ]
 }
